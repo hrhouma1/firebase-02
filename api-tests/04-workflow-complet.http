@@ -1,0 +1,248 @@
+### 🎯 WORKFLOW COMPLET - Scénario de A à Z
+### Ce fichier exécute un scénario complet d'utilisation du système
+
+@apiUrl = http://localhost:5001/backend-demo-1/us-central1/api
+@authUrl = http://localhost:9099/identitytoolkit.googleapis.com/v1
+
+### ============================================
+### ÉTAPE 1: SE CONNECTER EN TANT QU'ADMIN
+### ============================================
+
+# @name loginAdmin
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "admin@school.com",
+  "password": "admin123",
+  "returnSecureToken": true
+}
+
+@adminToken = {{loginAdmin.response.body.idToken}}
+
+### ============================================
+### ÉTAPE 2: ADMIN CRÉE UN PROFESSEUR
+### ============================================
+
+# @name createProf
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "marie.leclerc@school.com",
+  "password": "prof456",
+  "role": "professor",
+  "firstName": "Marie",
+  "lastName": "Leclerc"
+}
+
+@profUid = {{createProf.response.body.data.uid}}
+
+### ============================================
+### ÉTAPE 3: ADMIN CRÉE DEUX ÉTUDIANTS
+### ============================================
+
+# @name createStudent1
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "paul.dupont@school.com",
+  "password": "student456",
+  "role": "student",
+  "firstName": "Paul",
+  "lastName": "Dupont"
+}
+
+@student1Uid = {{createStudent1.response.body.data.uid}}
+
+###
+
+# @name createStudent2
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "emma.rousseau@school.com",
+  "password": "student456",
+  "role": "student",
+  "firstName": "Emma",
+  "lastName": "Rousseau"
+}
+
+@student2Uid = {{createStudent2.response.body.data.uid}}
+
+### Vérifier les utilisateurs créés
+GET {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+
+### ============================================
+### ÉTAPE 4: PROFESSEUR SE CONNECTE ET CRÉE UN COURS
+### ============================================
+
+# @name loginProf
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "marie.leclerc@school.com",
+  "password": "prof456",
+  "returnSecureToken": true
+}
+
+@profToken = {{loginProf.response.body.idToken}}
+
+### Professeur crée un cours
+# @name createCourse
+POST {{apiUrl}}/v1/courses
+Authorization: Bearer {{profToken}}
+Content-Type: application/json
+
+{
+  "title": "Développement Web Full Stack",
+  "description": "Créer des applications web modernes avec React et Node.js",
+  "maxStudents": 15
+}
+
+@courseId = {{createCourse.response.body.data.id}}
+
+### Professeur vérifie ses cours
+GET {{apiUrl}}/v1/courses/my
+Authorization: Bearer {{profToken}}
+
+### ============================================
+### ÉTAPE 5: ÉTUDIANT 1 S'INSCRIT AU COURS
+### ============================================
+
+# @name loginStudent1
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "paul.dupont@school.com",
+  "password": "student456",
+  "returnSecureToken": true
+}
+
+@student1Token = {{loginStudent1.response.body.idToken}}
+
+### Étudiant 1 consulte les cours disponibles
+GET {{apiUrl}}/v1/courses
+Authorization: Bearer {{student1Token}}
+
+### Étudiant 1 s'inscrit au cours
+# @name enrollment1
+POST {{apiUrl}}/v1/enrollments
+Authorization: Bearer {{student1Token}}
+Content-Type: application/json
+
+{
+  "courseId": "{{courseId}}"
+}
+
+@enrollment1Id = {{enrollment1.response.body.data.id}}
+
+### Étudiant 1 crée une note
+# @name note1
+POST {{apiUrl}}/v1/notes
+Authorization: Bearer {{student1Token}}
+Content-Type: application/json
+
+{
+  "title": "Premier jour de cours",
+  "content": "Introduction au développement web. Stack technologique: HTML, CSS, JavaScript, React, Node.js"
+}
+
+### ============================================
+### ÉTAPE 6: ÉTUDIANT 2 S'INSCRIT AUSSI
+### ============================================
+
+# @name loginStudent2
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "emma.rousseau@school.com",
+  "password": "student456",
+  "returnSecureToken": true
+}
+
+@student2Token = {{loginStudent2.response.body.idToken}}
+
+### Étudiant 2 s'inscrit au même cours
+# @name enrollment2
+POST {{apiUrl}}/v1/enrollments
+Authorization: Bearer {{student2Token}}
+Content-Type: application/json
+
+{
+  "courseId": "{{courseId}}"
+}
+
+### Étudiant 2 vérifie ses inscriptions
+GET {{apiUrl}}/v1/enrollments/my
+Authorization: Bearer {{student2Token}}
+
+### ============================================
+### ÉTAPE 7: PROFESSEUR CONSULTE LES INSCRIPTIONS
+### ============================================
+
+GET {{apiUrl}}/v1/courses/{{courseId}}/enrollments
+Authorization: Bearer {{profToken}}
+
+### Professeur consulte les détails du cours
+GET {{apiUrl}}/v1/courses/{{courseId}}
+Authorization: Bearer {{profToken}}
+
+### ============================================
+### ÉTAPE 8: PROFESSEUR MODIFIE LE COURS
+### ============================================
+
+PUT {{apiUrl}}/v1/courses/{{courseId}}
+Authorization: Bearer {{profToken}}
+Content-Type: application/json
+
+{
+  "description": "Créer des applications web modernes avec React, Node.js et MongoDB. Projet final inclus.",
+  "maxStudents": 20
+}
+
+### ============================================
+### ÉTAPE 9: ÉTUDIANT 1 ANNULE SON INSCRIPTION
+### ============================================
+
+DELETE {{apiUrl}}/v1/enrollments/{{enrollment1Id}}
+Authorization: Bearer {{student1Token}}
+
+### Vérifier que l'inscription est annulée
+GET {{apiUrl}}/v1/enrollments/my
+Authorization: Bearer {{student1Token}}
+
+### ============================================
+### ÉTAPE 10: ADMIN CONSULTE TOUT LE SYSTÈME
+### ============================================
+
+### Tous les utilisateurs
+GET {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+
+### Tous les cours
+GET {{apiUrl}}/v1/courses
+Authorization: Bearer {{adminToken}}
+
+### ============================================
+### 📊 RÉSUMÉ DU SCÉNARIO
+### ============================================
+### ✅ Admin créé et connecté
+### ✅ 1 Professeur créé (Marie Leclerc)
+### ✅ 2 Étudiants créés (Paul, Emma)
+### ✅ 1 Cours créé (Développement Web Full Stack)
+### ✅ 2 Inscriptions effectuées
+### ✅ 1 Annulation d'inscription
+### ✅ Notes créées par les étudiants
+### ✅ Professeur consulte les inscriptions
+### ✅ Admin supervise le système
+

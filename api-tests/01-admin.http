@@ -1,0 +1,135 @@
+### 👨‍💼 TESTS ADMIN
+### Prérequis: Exécuter d'abord 00-auth.http pour obtenir le token admin
+
+@apiUrl = http://localhost:5001/backend-demo-1/us-central1/api
+@authUrl = http://localhost:9099/identitytoolkit.googleapis.com/v1
+
+### Se connecter en tant qu'admin
+# @name loginAdmin
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "admin@school.com",
+  "password": "admin123",
+  "returnSecureToken": true
+}
+
+@adminToken = {{loginAdmin.response.body.idToken}}
+
+### ============================================
+### GESTION DES UTILISATEURS (Admin uniquement)
+### ============================================
+
+### 1. Créer un Professeur
+# @name createProfessor
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "prof.martin@school.com",
+  "password": "prof123",
+  "role": "professor",
+  "firstName": "Jean",
+  "lastName": "Martin"
+}
+
+### 2. Créer un Étudiant 1
+# @name createStudent1
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "sophie.dubois@school.com",
+  "password": "student123",
+  "role": "student",
+  "firstName": "Sophie",
+  "lastName": "Dubois"
+}
+
+### 3. Créer un Étudiant 2
+# @name createStudent2
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "lucas.bernard@school.com",
+  "password": "student123",
+  "role": "student",
+  "firstName": "Lucas",
+  "lastName": "Bernard"
+}
+
+### 4. Lister tous les utilisateurs
+GET {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+
+### 5. Filtrer les utilisateurs par rôle (professeurs)
+GET {{apiUrl}}/v1/users?role=professor
+Authorization: Bearer {{adminToken}}
+
+### 6. Filtrer les utilisateurs par rôle (étudiants)
+GET {{apiUrl}}/v1/users?role=student
+Authorization: Bearer {{adminToken}}
+
+### 7. Consulter un utilisateur spécifique
+# Remplacer {uid} par un UID réel
+GET {{apiUrl}}/v1/users/{{createProfessor.response.body.data.uid}}
+Authorization: Bearer {{adminToken}}
+
+### 8. Modifier un utilisateur
+# Remplacer {uid} par un UID réel
+PUT {{apiUrl}}/v1/users/{{createStudent1.response.body.data.uid}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Sophie Marie",
+  "lastName": "Dubois"
+}
+
+### 9. Changer le rôle d'un utilisateur
+PUT {{apiUrl}}/v1/users/{{createStudent2.response.body.data.uid}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "role": "professor"
+}
+
+### 10. Supprimer un utilisateur (Attention!)
+# DELETE {{apiUrl}}/v1/users/{uid}
+# Authorization: Bearer {{adminToken}}
+
+### ============================================
+### CONSULTER SON PROFIL
+### ============================================
+
+### 11. Voir son profil admin
+GET {{apiUrl}}/v1/profile
+Authorization: Bearer {{adminToken}}
+
+### 12. Modifier son profil
+PUT {{apiUrl}}/v1/profile
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Super",
+  "lastName": "Administrateur"
+}
+
+### ============================================
+### ACCÈS À TOUS LES COURS (Admin)
+### ============================================
+
+### 13. Lister tous les cours
+GET {{apiUrl}}/v1/courses
+Authorization: Bearer {{adminToken}}
+
+### 14. Voir toutes les inscriptions
+# L'admin peut tout voir
+

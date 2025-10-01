@@ -1,0 +1,576 @@
+### SCÉNARIO GUIDÉ COMPLET - ÉTAPE PAR ÉTAPE
+### 
+### Ce fichier vous guide à travers un scénario complet d'utilisation du système.
+### Suivez les instructions dans l'ordre et attendez les réponses avant de continuer.
+###
+### PRÉREQUIS: Démarrez les émulateurs avec: npm run serve
+###
+
+@apiUrl = http://localhost:5001/backend-demo-1/us-central1/api
+@authUrl = http://localhost:9099/identitytoolkit.googleapis.com/v1
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 1 : CRÉER LE COMPTE ADMIN                                           #
+#                                                                              #
+#   Instructions:                                                              #
+#   1. Cliquez sur "Send Request" ci-dessous                                   #
+#   2. COPIEZ le "localId" de la réponse                                       #
+#   3. Allez sur http://localhost:4000                                         #
+#   4. Cliquez sur "Firestore Database"                                        #
+#   5. Cliquez sur "Start collection"                                          #
+#   6. Nom de collection: users                                                #
+#   7. Document ID: Collez le localId                                          #
+#   8. Ajoutez ces champs (cliquez sur "Add field"):                           #
+#      - uid (string): [le localId]                                            #
+#      - email (string): admin@school.com                                      #
+#      - role (string): admin                                                  #
+#      - firstName (string): Super                                             #
+#      - lastName (string): Admin                                              #
+#      - createdAt (number): 1704067200000                                     #
+#      - updatedAt (number): 1704067200000                                     #
+#   9. Cliquez sur "Save"                                                      #
+#   10. Revenez ici et continuez                                               #
+#                                                                              #
+################################################################################
+
+# @name signupAdmin
+POST {{authUrl}}/accounts:signUp?key=anything
+Content-Type: application/json
+
+{
+  "email": "admin@school.com",
+  "password": "admin123",
+  "returnSecureToken": true
+}
+
+### PAUSE: Avez-vous créé le profil admin dans Firestore? (voir instructions ci-dessus)
+### Appuyez sur Entrée pour confirmer que c'est fait, puis continuez...
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 2 : SE CONNECTER EN TANT QU'ADMIN                                   #
+#                                                                              #
+#   Instructions:                                                              #
+#   1. Cliquez sur "Send Request"                                              #
+#   2. Vérifiez que vous recevez un "idToken" dans la réponse                  #
+#                                                                              #
+################################################################################
+
+# @name loginAdmin
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "admin@school.com",
+  "password": "admin123",
+  "returnSecureToken": true
+}
+
+@adminToken = {{loginAdmin.response.body.idToken}}
+
+### Test: Vérifier que l'admin est connecté
+GET {{apiUrl}}/v1/profile
+Authorization: Bearer {{adminToken}}
+
+### Résultat attendu: Vous devez voir votre profil admin avec role: "admin"
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 3 : ADMIN CRÉE UN PROFESSEUR                                        #
+#                                                                              #
+#   Instructions:                                                              #
+#   1. Cliquez sur "Send Request"                                              #
+#   2. Notez que l'utilisateur ET son profil sont créés automatiquement       #
+#                                                                              #
+################################################################################
+
+# @name createProfessor
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "prof.martin@school.com",
+  "password": "prof123",
+  "role": "professor",
+  "firstName": "Jean",
+  "lastName": "Martin"
+}
+
+@professorUid = {{createProfessor.response.body.data.uid}}
+
+### Résultat attendu: Status 201, vous voyez les infos du professeur créé
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 4 : ADMIN CRÉE DEUX ÉTUDIANTS                                       #
+#                                                                              #
+################################################################################
+
+# @name createStudent1
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "sophie.dubois@school.com",
+  "password": "student123",
+  "role": "student",
+  "firstName": "Sophie",
+  "lastName": "Dubois"
+}
+
+@student1Uid = {{createStudent1.response.body.data.uid}}
+
+###
+
+# @name createStudent2
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "lucas.bernard@school.com",
+  "password": "student123",
+  "role": "student",
+  "firstName": "Lucas",
+  "lastName": "Bernard"
+}
+
+@student2Uid = {{createStudent2.response.body.data.uid}}
+
+### Vérification: Lister tous les utilisateurs
+GET {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+
+### Résultat attendu: Vous devez voir 4 utilisateurs (1 admin, 1 prof, 2 étudiants)
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 5 : CHANGER DE RÔLE - SE CONNECTER EN TANT QUE PROFESSEUR           #
+#                                                                              #
+#   CHANGEMENT DE RÔLE: Admin → Professeur                                    #
+#                                                                              #
+#   Instructions:                                                              #
+#   1. Cliquez sur "Send Request" pour vous connecter comme professeur        #
+#   2. Un nouveau token sera créé pour le professeur                          #
+#                                                                              #
+################################################################################
+
+# @name loginProfessor
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "prof.martin@school.com",
+  "password": "prof123",
+  "returnSecureToken": true
+}
+
+@professorToken = {{loginProfessor.response.body.idToken}}
+
+### Test: Vérifier l'identité du professeur
+GET {{apiUrl}}/v1/profile
+Authorization: Bearer {{professorToken}}
+
+### Résultat attendu: role: "professor", firstName: "Jean", lastName: "Martin"
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 6 : PROFESSEUR CRÉE UN COURS DE PYTHON                              #
+#                                                                              #
+#   Ce que fait le professeur:                                                #
+#   - Créer un cours avec titre, description et nombre max d'étudiants        #
+#                                                                              #
+################################################################################
+
+# @name createCoursePython
+POST {{apiUrl}}/v1/courses
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "title": "Introduction à Python",
+  "description": "Apprendre les bases de Python : variables, fonctions, boucles, classes",
+  "maxStudents": 30
+}
+
+@coursePythonId = {{createCoursePython.response.body.data.id}}
+
+### Résultat attendu: 
+### - Status 201
+### - Cours créé avec un ID
+### - professorUid = votre UID
+### - currentStudents = 0
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 7 : PROFESSEUR CRÉE UN DEUXIÈME COURS (JAVASCRIPT)                  #
+#                                                                              #
+################################################################################
+
+# @name createCourseJavaScript
+POST {{apiUrl}}/v1/courses
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "title": "JavaScript Moderne - ES6+",
+  "description": "Maîtriser JavaScript : async/await, promises, modules, React basics",
+  "maxStudents": 25
+}
+
+@courseJavaScriptId = {{createCourseJavaScript.response.body.data.id}}
+
+### Vérification: Professeur consulte SES cours
+GET {{apiUrl}}/v1/courses/my
+Authorization: Bearer {{professorToken}}
+
+### Résultat attendu: 2 cours (Python et JavaScript)
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 8 : CHANGER DE RÔLE - SE CONNECTER EN TANT QU'ÉTUDIANT 1            #
+#                                                                              #
+#   CHANGEMENT DE RÔLE: Professeur → Étudiant (Sophie)                        #
+#                                                                              #
+################################################################################
+
+# @name loginStudent1
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "sophie.dubois@school.com",
+  "password": "student123",
+  "returnSecureToken": true
+}
+
+@student1Token = {{loginStudent1.response.body.idToken}}
+
+### Test: Vérifier l'identité de l'étudiante
+GET {{apiUrl}}/v1/profile
+Authorization: Bearer {{student1Token}}
+
+### Résultat attendu: role: "student", firstName: "Sophie", lastName: "Dubois"
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 9 : ÉTUDIANTE CONSULTE LES COURS DISPONIBLES                        #
+#                                                                              #
+#   Ce que fait l'étudiante:                                                  #
+#   - Voir tous les cours disponibles dans l'école                            #
+#   - Elle peut voir les cours de tous les professeurs                        #
+#                                                                              #
+################################################################################
+
+GET {{apiUrl}}/v1/courses
+Authorization: Bearer {{student1Token}}
+
+### Résultat attendu: 
+### - Liste des 2 cours créés par le professeur
+### - Informations: titre, description, prof, nombre d'étudiants
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 10 : ÉTUDIANTE S'INSCRIT AU COURS DE PYTHON                         #
+#                                                                              #
+################################################################################
+
+# @name enrollment1Python
+POST {{apiUrl}}/v1/enrollments
+Authorization: Bearer {{student1Token}}
+Content-Type: application/json
+
+{
+  "courseId": "{{coursePythonId}}"
+}
+
+@enrollment1PythonId = {{enrollment1Python.response.body.data.id}}
+
+### Résultat attendu: 
+### - Status 201
+### - Inscription créée avec status: "active"
+### - studentName: "Sophie Dubois"
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 11 : ÉTUDIANTE S'INSCRIT AUSSI AU COURS DE JAVASCRIPT               #
+#                                                                              #
+################################################################################
+
+# @name enrollment1JavaScript
+POST {{apiUrl}}/v1/enrollments
+Authorization: Bearer {{student1Token}}
+Content-Type: application/json
+
+{
+  "courseId": "{{courseJavaScriptId}}"
+}
+
+### Vérification: Étudiante consulte SES inscriptions
+GET {{apiUrl}}/v1/enrollments/my
+Authorization: Bearer {{student1Token}}
+
+### Résultat attendu: 
+### - 2 inscriptions (Python et JavaScript)
+### - Chaque inscription montre les détails du cours
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 12 : ÉTUDIANTE CRÉE DES NOTES DE COURS                              #
+#                                                                              #
+#   L'étudiante prend des notes pour réviser                                  #
+#                                                                              #
+################################################################################
+
+# @name note1
+POST {{apiUrl}}/v1/notes
+Authorization: Bearer {{student1Token}}
+Content-Type: application/json
+
+{
+  "title": "Python - Jour 1",
+  "content": "Variables: int, str, float, bool\nPrint: print('Hello')\nInput: input('Question: ')"
+}
+
+###
+
+# @name note2
+POST {{apiUrl}}/v1/notes
+Authorization: Bearer {{student1Token}}
+Content-Type: application/json
+
+{
+  "title": "JavaScript - Concepts clés",
+  "content": "const, let, var\nArrow functions: () => {}\nPromises et async/await"
+}
+
+### Vérification: Voir toutes ses notes
+GET {{apiUrl}}/v1/notes
+Authorization: Bearer {{student1Token}}
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 13 : CHANGER DE RÔLE - DEUXIÈME ÉTUDIANT (LUCAS)                    #
+#                                                                              #
+#   CHANGEMENT DE RÔLE: Sophie → Lucas                                        #
+#                                                                              #
+################################################################################
+
+# @name loginStudent2
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "lucas.bernard@school.com",
+  "password": "student123",
+  "returnSecureToken": true
+}
+
+@student2Token = {{loginStudent2.response.body.idToken}}
+
+### Test: Vérifier l'identité
+GET {{apiUrl}}/v1/profile
+Authorization: Bearer {{student2Token}}
+
+### Résultat attendu: role: "student", firstName: "Lucas"
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 14 : LUCAS S'INSCRIT SEULEMENT AU COURS DE PYTHON                   #
+#                                                                              #
+################################################################################
+
+# @name enrollment2Python
+POST {{apiUrl}}/v1/enrollments
+Authorization: Bearer {{student2Token}}
+Content-Type: application/json
+
+{
+  "courseId": "{{coursePythonId}}"
+}
+
+### Vérification: Lucas voit SES inscriptions (seulement Python)
+GET {{apiUrl}}/v1/enrollments/my
+Authorization: Bearer {{student2Token}}
+
+### Résultat attendu: 1 seule inscription (Python)
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 15 : RETOUR AU PROFESSEUR - CONSULTER LES INSCRIPTIONS              #
+#                                                                              #
+#   CHANGEMENT DE RÔLE: Lucas → Professeur                                    #
+#                                                                              #
+#   Le professeur veut voir qui s'est inscrit à ses cours                     #
+#                                                                              #
+################################################################################
+
+### Le professeur est déjà connecté, on réutilise son token
+### Si le token a expiré, relancez la requête loginProfessor ci-dessus
+
+### Voir les inscriptions au cours de Python
+GET {{apiUrl}}/v1/courses/{{coursePythonId}}/enrollments
+Authorization: Bearer {{professorToken}}
+
+### Résultat attendu: 
+### - 2 inscriptions (Sophie et Lucas)
+### - Noms des étudiants visibles
+
+### Voir les inscriptions au cours de JavaScript
+GET {{apiUrl}}/v1/courses/{{courseJavaScriptId}}/enrollments
+Authorization: Bearer {{professorToken}}
+
+### Résultat attendu: 
+### - 1 inscription (Sophie seulement)
+
+### Voir les détails du cours Python (avec nombre d'étudiants)
+GET {{apiUrl}}/v1/courses/{{coursePythonId}}
+Authorization: Bearer {{professorToken}}
+
+### Résultat attendu: 
+### - currentStudents: 2
+### - maxStudents: 30
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 16 : PROFESSEUR MODIFIE LE COURS PYTHON                             #
+#                                                                              #
+#   Le professeur décide d'ajouter plus d'infos au cours                      #
+#                                                                              #
+################################################################################
+
+PUT {{apiUrl}}/v1/courses/{{coursePythonId}}
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "description": "Apprendre Python de A à Z : variables, fonctions, boucles, classes, fichiers. NOUVEAU: Projet final inclus!",
+  "maxStudents": 35
+}
+
+### Vérification: Voir le cours modifié
+GET {{apiUrl}}/v1/courses/{{coursePythonId}}
+Authorization: Bearer {{professorToken}}
+
+### Résultat attendu: Description et maxStudents mis à jour
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 17 : SOPHIE DÉCIDE D'ANNULER SON INSCRIPTION À JAVASCRIPT           #
+#                                                                              #
+#   CHANGEMENT DE RÔLE: Professeur → Sophie                                   #
+#                                                                              #
+################################################################################
+
+### On réutilise le token de Sophie (si expiré, relancez loginStudent1)
+
+DELETE {{apiUrl}}/v1/enrollments/{{enrollment1JavaScript.response.body.data.id}}
+Authorization: Bearer {{student1Token}}
+
+### Vérification: Voir les inscriptions de Sophie
+GET {{apiUrl}}/v1/enrollments/my
+Authorization: Bearer {{student1Token}}
+
+### Résultat attendu: 
+### - Plus que 1 inscription (Python)
+### - JavaScript n'apparaît plus dans les inscriptions actives
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 18 : ADMIN FAIT UN RAPPORT COMPLET DU SYSTÈME                       #
+#                                                                              #
+#   CHANGEMENT DE RÔLE: Sophie → Admin                                        #
+#                                                                              #
+#   L'admin veut une vue d'ensemble de tout le système                        #
+#                                                                              #
+################################################################################
+
+### Tous les utilisateurs
+GET {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+
+### Tous les cours
+GET {{apiUrl}}/v1/courses
+Authorization: Bearer {{adminToken}}
+
+### Statistiques par rôle
+GET {{apiUrl}}/v1/users?role=professor
+Authorization: Bearer {{adminToken}}
+
+###
+GET {{apiUrl}}/v1/users?role=student
+Authorization: Bearer {{adminToken}}
+
+################################################################################
+#                                                                              #
+#   ÉTAPE 19 : TESTS DE SÉCURITÉ                                              #
+#                                                                              #
+#   Ces requêtes DOIVENT échouer avec une erreur 403                          #
+#                                                                              #
+################################################################################
+
+### ❌ Test 1: Un étudiant ne peut PAS créer de cours
+POST {{apiUrl}}/v1/courses
+Authorization: Bearer {{student1Token}}
+Content-Type: application/json
+
+{
+  "title": "Cours non autorisé",
+  "description": "Ceci doit échouer",
+  "maxStudents": 10
+}
+
+### Résultat attendu: Status 403 Forbidden OK
+
+###
+
+### ❌ Test 2: Un professeur ne peut PAS créer d'utilisateurs
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "email": "hack@test.com",
+  "password": "hack123",
+  "role": "admin",
+  "firstName": "Hack",
+  "lastName": "Attempt"
+}
+
+### Résultat attendu: Status 403 Forbidden OK
+
+###
+
+### ❌ Test 3: Un étudiant ne peut PAS voir les inscriptions d'un cours
+GET {{apiUrl}}/v1/courses/{{coursePythonId}}/enrollments
+Authorization: Bearer {{student1Token}}
+
+### Résultat attendu: Status 403 Forbidden OK
+
+################################################################################
+#                                                                              #
+#   FÉLICITATIONS ! SCÉNARIO TERMINÉ                                          #
+#                                                                              #
+#   RÉSUMÉ DE CE QUE VOUS AVEZ FAIT:                                          #
+#                                                                              #
+#   - 1 Admin créé et configuré                                               #
+#   - 1 Professeur créé                                                       #
+#   - 2 Étudiants créés                                                       #
+#   - 2 Cours créés (Python, JavaScript)                                      #
+#   - 3 Inscriptions effectuées                                               #
+#   - 1 Annulation d'inscription                                              #
+#   - 2 Notes créées                                                          #
+#   - Permissions testées et validées                                         #
+#                                                                              #
+#   Vous avez testé tous les rôles et leurs permissions!                      #
+#                                                                              #
+#   Pour aller plus loin:                                                     #
+#   - Consultez GUIDE_RBAC.md pour plus de détails                            #
+#   - Explorez les autres fichiers .http dans api-tests/                      #
+#   - Modifiez ce scénario selon vos besoins                                  #
+#                                                                              #
+################################################################################
+

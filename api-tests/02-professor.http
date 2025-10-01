@@ -1,0 +1,181 @@
+### 👨‍🏫 TESTS PROFESSEUR
+### Prérequis: Créer le professeur via 01-admin.http
+
+@apiUrl = http://localhost:5001/backend-demo-1/us-central1/api
+@authUrl = http://localhost:9099/identitytoolkit.googleapis.com/v1
+
+### Se connecter en tant que professeur
+# @name loginProfessor
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "prof.martin@school.com",
+  "password": "prof123",
+  "returnSecureToken": true
+}
+
+@professorToken = {{loginProfessor.response.body.idToken}}
+
+### ============================================
+### GESTION DU PROFIL
+### ============================================
+
+### 1. Voir son profil
+GET {{apiUrl}}/v1/profile
+Authorization: Bearer {{professorToken}}
+
+### 2. Modifier son profil
+PUT {{apiUrl}}/v1/profile
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Jean-Pierre",
+  "lastName": "Martin"
+}
+
+### ============================================
+### GESTION DES COURS
+### ============================================
+
+### 3. Créer un cours (Python)
+# @name createCoursePython
+POST {{apiUrl}}/v1/courses
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "title": "Introduction à Python",
+  "description": "Apprendre les bases de la programmation Python pour débutants",
+  "maxStudents": 30
+}
+
+@coursePythonId = {{createCoursePython.response.body.data.id}}
+
+### 4. Créer un cours (JavaScript)
+# @name createCourseJS
+POST {{apiUrl}}/v1/courses
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "title": "JavaScript Avancé",
+  "description": "Concepts avancés de JavaScript ES6+ et programmation asynchrone",
+  "maxStudents": 25
+}
+
+@courseJSId = {{createCourseJS.response.body.data.id}}
+
+### 5. Créer un cours (TypeScript)
+# @name createCourseTS
+POST {{apiUrl}}/v1/courses
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "title": "TypeScript pour les développeurs JavaScript",
+  "description": "Maîtriser TypeScript et le typage statique",
+  "maxStudents": 20
+}
+
+### 6. Lister MES cours
+GET {{apiUrl}}/v1/courses/my
+Authorization: Bearer {{professorToken}}
+
+### 7. Lister TOUS les cours disponibles
+GET {{apiUrl}}/v1/courses
+Authorization: Bearer {{professorToken}}
+
+### 8. Consulter un cours spécifique
+GET {{apiUrl}}/v1/courses/{{coursePythonId}}
+Authorization: Bearer {{professorToken}}
+
+### 9. Modifier un cours
+PUT {{apiUrl}}/v1/courses/{{coursePythonId}}
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "title": "Python pour Débutants - Édition 2025",
+  "description": "Apprendre Python de zéro avec des exemples pratiques",
+  "maxStudents": 35
+}
+
+### 10. Supprimer un cours
+# DELETE {{apiUrl}}/v1/courses/{{courseJSId}}
+# Authorization: Bearer {{professorToken}}
+
+### ============================================
+### CONSULTER LES INSCRIPTIONS
+### ============================================
+
+### 11. Voir les inscriptions au cours Python
+GET {{apiUrl}}/v1/courses/{{coursePythonId}}/enrollments
+Authorization: Bearer {{professorToken}}
+
+### 12. Voir les inscriptions au cours JavaScript
+GET {{apiUrl}}/v1/courses/{{courseJSId}}/enrollments
+Authorization: Bearer {{professorToken}}
+
+### ============================================
+### GESTION DES NOTES PERSONNELLES
+### ============================================
+
+### 13. Créer une note
+# @name createNote
+POST {{apiUrl}}/v1/notes
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "title": "Idées pour le cours Python",
+  "content": "Ajouter des exercices sur les listes et dictionnaires. Prévoir un mini-projet final."
+}
+
+@noteId = {{createNote.response.body.data.id}}
+
+### 14. Lister mes notes
+GET {{apiUrl}}/v1/notes
+Authorization: Bearer {{professorToken}}
+
+### 15. Modifier une note
+PUT {{apiUrl}}/v1/notes/{{noteId}}
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "title": "Plan du cours Python - Semaine 1",
+  "content": "Jour 1: Variables et types\nJour 2: Conditions et boucles\nJour 3: Fonctions\nJour 4: Listes et tuples\nJour 5: Mini-projet"
+}
+
+### 16. Supprimer une note
+# DELETE {{apiUrl}}/v1/notes/{{noteId}}
+# Authorization: Bearer {{professorToken}}
+
+### ============================================
+### TESTS DE SÉCURITÉ (doivent échouer)
+### ============================================
+
+### ❌ Test 1: Un professeur ne peut PAS créer d'utilisateurs
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "email": "unauthorized@test.com",
+  "password": "test123",
+  "role": "student",
+  "firstName": "Test",
+  "lastName": "Unauthorized"
+}
+
+### ❌ Test 2: Un professeur ne peut PAS s'inscrire comme étudiant
+POST {{apiUrl}}/v1/enrollments
+Authorization: Bearer {{professorToken}}
+Content-Type: application/json
+
+{
+  "courseId": "{{coursePythonId}}"
+}
+

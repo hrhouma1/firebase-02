@@ -1,0 +1,90 @@
+### 🔐 AUTHENTIFICATION - Firebase Auth Emulator
+### Ce fichier contient les requêtes pour créer et authentifier les utilisateurs
+
+@authUrl = http://localhost:9099/identitytoolkit.googleapis.com/v1
+@apiUrl = http://localhost:5001/backend-demo-1/us-central1/api
+
+### ============================================
+### 1. CRÉER UN COMPTE ADMIN
+### ============================================
+# @name createAdmin
+POST {{authUrl}}/accounts:signUp?key=anything
+Content-Type: application/json
+
+{
+  "email": "admin@school.com",
+  "password": "admin123",
+  "returnSecureToken": true
+}
+
+### ⚠️ IMPORTANT: Après avoir créé l'admin, vous devez:
+### 1. Copier le "localId" de la réponse ci-dessus
+### 2. Aller sur http://localhost:4000 → Firestore
+### 3. Créer une collection "users"
+### 4. Créer un document avec l'ID = localId
+### 5. Ajouter ces champs:
+###    - uid: "[localId]"
+###    - email: "admin@school.com"
+###    - role: "admin"
+###    - firstName: "Super"
+###    - lastName: "Admin"
+###    - createdAt: 1704067200000
+###    - updatedAt: 1704067200000
+
+### ============================================
+### 2. SE CONNECTER EN TANT QU'ADMIN
+### ============================================
+# @name loginAdmin
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "admin@school.com",
+  "password": "admin123",
+  "returnSecureToken": true
+}
+
+### Enregistrer le token:
+@adminToken = {{loginAdmin.response.body.idToken}}
+
+### ============================================
+### 3. SE CONNECTER EN TANT QUE PROFESSEUR
+### ============================================
+# @name loginProfessor
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "prof.martin@school.com",
+  "password": "prof123",
+  "returnSecureToken": true
+}
+
+@professorToken = {{loginProfessor.response.body.idToken}}
+
+### ============================================
+### 4. SE CONNECTER EN TANT QU'ÉTUDIANT
+### ============================================
+# @name loginStudent
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "sophie.dubois@school.com",
+  "password": "student123",
+  "returnSecureToken": true
+}
+
+@studentToken = {{loginStudent.response.body.idToken}}
+
+### ============================================
+### 5. HEALTH CHECK (Public)
+### ============================================
+GET {{apiUrl}}/health
+
+### ============================================
+### 6. VOIR SON PROFIL (Admin)
+### ============================================
+GET {{apiUrl}}/v1/profile
+Authorization: Bearer {{adminToken}}
+

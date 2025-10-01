@@ -1,0 +1,193 @@
+### 👨‍🎓 TESTS ÉTUDIANT
+### Prérequis: Créer l'étudiant via 01-admin.http
+
+@apiUrl = http://localhost:5001/backend-demo-1/us-central1/api
+@authUrl = http://localhost:9099/identitytoolkit.googleapis.com/v1
+
+### Se connecter en tant qu'étudiant
+# @name loginStudent
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "sophie.dubois@school.com",
+  "password": "student123",
+  "returnSecureToken": true
+}
+
+@studentToken = {{loginStudent.response.body.idToken}}
+
+### ============================================
+### GESTION DU PROFIL
+### ============================================
+
+### 1. Voir son profil
+GET {{apiUrl}}/v1/profile
+Authorization: Bearer {{studentToken}}
+
+### 2. Modifier son profil
+PUT {{apiUrl}}/v1/profile
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Sophie Marie",
+  "lastName": "Dubois-Laurent"
+}
+
+### ============================================
+### CONSULTER LES COURS DISPONIBLES
+### ============================================
+
+### 3. Lister tous les cours disponibles
+GET {{apiUrl}}/v1/courses
+Authorization: Bearer {{studentToken}}
+
+### 4. Consulter un cours spécifique
+# Remplacer {courseId} par un ID réel de cours
+# GET {{apiUrl}}/v1/courses/{courseId}
+# Authorization: Bearer {{studentToken}}
+
+### ============================================
+### INSCRIPTIONS AUX COURS
+### ============================================
+
+### 5. S'inscrire au cours Python
+# @name enrollPython
+# ⚠️ Remplacer {courseId} par l'ID du cours Python créé par le professeur
+POST {{apiUrl}}/v1/enrollments
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "courseId": "REMPLACER_PAR_ID_COURS_PYTHON"
+}
+
+@enrollmentPythonId = {{enrollPython.response.body.data.id}}
+
+### 6. S'inscrire au cours JavaScript
+# @name enrollJS
+POST {{apiUrl}}/v1/enrollments
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "courseId": "REMPLACER_PAR_ID_COURS_JS"
+}
+
+@enrollmentJSId = {{enrollJS.response.body.data.id}}
+
+### 7. Voir MES inscriptions
+GET {{apiUrl}}/v1/enrollments/my
+Authorization: Bearer {{studentToken}}
+
+### 8. Annuler une inscription
+# DELETE {{apiUrl}}/v1/enrollments/{{enrollmentJSId}}
+# Authorization: Bearer {{studentToken}}
+
+### ============================================
+### GESTION DES NOTES PERSONNELLES
+### ============================================
+
+### 9. Créer une note de cours
+# @name createNote1
+POST {{apiUrl}}/v1/notes
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "title": "Résumé Python - Semaine 1",
+  "content": "Variables: int, str, float, bool\nOpérateurs: +, -, *, /, //, %, **\nInput: input()\nOutput: print()"
+}
+
+@note1Id = {{createNote1.response.body.data.id}}
+
+### 10. Créer une note de révision
+# @name createNote2
+POST {{apiUrl}}/v1/notes
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "title": "À réviser pour l'examen",
+  "content": "- Les fonctions lambda\n- List comprehension\n- Gestion des exceptions\n- Modules et packages"
+}
+
+### 11. Créer une note de projet
+# @name createNote3
+POST {{apiUrl}}/v1/notes
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "title": "Idées de projet final",
+  "content": "Option 1: Application de gestion de tâches\nOption 2: Jeu de devinettes\nOption 3: Analyseur de fichiers CSV"
+}
+
+### 12. Lister toutes mes notes
+GET {{apiUrl}}/v1/notes
+Authorization: Bearer {{studentToken}}
+
+### 13. Consulter une note spécifique
+GET {{apiUrl}}/v1/notes/{{note1Id}}
+Authorization: Bearer {{studentToken}}
+
+### 14. Modifier une note
+PUT {{apiUrl}}/v1/notes/{{note1Id}}
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "title": "Python - Chapitre 1: Les Bases",
+  "content": "# Variables\nnom = 'Sophie'\nage = 22\nestEtudiant = True\n\n# Affichage\nprint(f'Je m'appelle {nom} et j'ai {age} ans')\n\n# Input\nreponse = input('Votre nom: ')"
+}
+
+### 15. Supprimer une note
+# DELETE {{apiUrl}}/v1/notes/{{note1Id}}
+# Authorization: Bearer {{studentToken}}
+
+### ============================================
+### TESTS DE SÉCURITÉ (doivent échouer)
+### ============================================
+
+### ❌ Test 1: Un étudiant ne peut PAS créer d'utilisateurs
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "email": "unauthorized@test.com",
+  "password": "test123",
+  "role": "student",
+  "firstName": "Test",
+  "lastName": "Test"
+}
+
+### ❌ Test 2: Un étudiant ne peut PAS créer de cours
+POST {{apiUrl}}/v1/courses
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "title": "Cours non autorisé",
+  "description": "Ceci devrait échouer",
+  "maxStudents": 10
+}
+
+### ❌ Test 3: Un étudiant ne peut PAS voir les inscriptions d'un cours
+# GET {{apiUrl}}/v1/courses/{courseId}/enrollments
+# Authorization: Bearer {{studentToken}}
+
+### ❌ Test 4: Un étudiant ne peut PAS modifier un cours
+# PUT {{apiUrl}}/v1/courses/{courseId}
+# Authorization: Bearer {{studentToken}}
+# Content-Type: application/json
+#
+# {
+#   "title": "Modification non autorisée"
+# }
+
+### ❌ Test 5: Un étudiant ne peut PAS lire les notes d'un autre étudiant
+# GET {{apiUrl}}/v1/notes/{note_id_dautrestudiant}
+# Authorization: Bearer {{studentToken}}
+

@@ -1,0 +1,84 @@
+// Firestore Security Rules avec RBAC
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function pour vérifier le rôle
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdmin() {
+      return request.auth != null && getUserRole() == 'admin';
+    }
+    
+    function isProfessor() {
+      return request.auth != null && getUserRole() == 'professor';
+    }
+    
+    function isStudent() {
+      return request.auth != null && getUserRole() == 'student';
+    }
+    
+    // ==================== USERS ====================
+    match /users/{userId} {
+      // Admin peut tout faire
+      allow read, write: if isAdmin();
+      
+      // Un utilisateur peut lire et modifier son propre profil
+      // (mais pas changer son rôle)
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null 
+                    && request.auth.uid == userId
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'uid', 'email']);
+    }
+    
+    // ==================== COURSES ====================
+    match /courses/{courseId} {
+      // Tout le monde peut lire les cours
+      allow read: if request.auth != null;
+      
+      // Professeurs et admins peuvent créer des cours
+      allow create: if (isProfessor() || isAdmin())
+                    && request.resource.data.professorUid == request.auth.uid;
+      
+      // Seul le professeur propriétaire ou admin peut modifier/supprimer
+      allow update, delete: if (resource.data.professorUid == request.auth.uid) || isAdmin();
+    }
+    
+    // ==================== ENROLLMENTS ====================
+    match /enrollments/{enrollmentId} {
+      // Admin peut tout faire
+      allow read, write: if isAdmin();
+      
+      // Professeurs peuvent voir les inscriptions de leurs cours
+      allow read: if isProfessor() && 
+                  get(/databases/$(database)/documents/courses/$(resource.data.courseId)).data.professorUid == request.auth.uid;
+      
+      // Étudiants peuvent créer des inscriptions
+      allow create: if isStudent()
+                    && request.resource.data.studentUid == request.auth.uid
+                    && request.resource.data.status == 'active';
+      
+      // Étudiants peuvent voir et annuler leurs propres inscriptions
+      allow read: if isStudent() && resource.data.studentUid == request.auth.uid;
+      allow update: if isStudent() 
+                    && resource.data.studentUid == request.auth.uid
+                    && request.resource.data.status == 'cancelled'
+                    && resource.data.status == 'active';
+    }
+    
+    // ==================== NOTES ====================
+    match /notes/{noteId} {
+      // Création autorisée seulement par un utilisateur connecté
+      allow create: if request.auth != null
+                    && request.resource.data.ownerUid == request.auth.uid;
+      
+      // Lecture / mise à jour / suppression autorisées
+      // uniquement au propriétaire du document
+      allow read, update, delete: if request.auth != null
+                    && resource.data.ownerUid == request.auth.uid;
+    }
+  }
+}
+

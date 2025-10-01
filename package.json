@@ -1,0 +1,20 @@
+{
+  "name": "backend-demo-1-root",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix functions run build",
+    "serve": "firebase emulators:start",
+    "deploy:functions": "npm --prefix functions run build && firebase deploy --only functions",
+    "deploy:rules": "firebase deploy --only firestore:rules",
+    "deploy:all": "npm --prefix functions run build && firebase deploy --only functions,firestore:rules"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3"
+  }
+}
+

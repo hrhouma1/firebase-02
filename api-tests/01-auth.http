@@ -1,0 +1,91 @@
+### AUTHENTIFICATION - Créer et se connecter
+### Utilisez ces routes pour créer des comptes et obtenir des tokens
+
+@apiUrl = http://localhost:5001/backend-demo-1/us-central1/api
+@authUrl = http://localhost:9099/identitytoolkit.googleapis.com/v1
+
+### ============================================
+### CRÉER UN COMPTE ADMIN (Auth + Firestore automatique)
+### ============================================
+
+# @name signupAdmin
+POST {{apiUrl}}/v1/auth/signup
+Content-Type: application/json
+
+{
+  "email": "admin@school.com",
+  "password": "admin123",
+  "role": "admin",
+  "firstName": "Super",
+  "lastName": "Admin"
+}
+
+### Résultat: Le compte Auth ET le profil Firestore sont créés automatiquement !
+### COPIEZ le "uid" de la réponse
+
+### ============================================
+### SE CONNECTER ET OBTENIR LE TOKEN
+### ============================================
+
+# @name loginAdmin
+POST {{authUrl}}/accounts:signInWithPassword?key=anything
+Content-Type: application/json
+
+{
+  "email": "admin@school.com",
+  "password": "admin123",
+  "returnSecureToken": true
+}
+
+@adminToken = {{loginAdmin.response.body.idToken}}
+
+### ============================================
+### TESTER LA CONNEXION
+### ============================================
+
+GET {{apiUrl}}/v1/profile
+Authorization: Bearer {{adminToken}}
+
+### Résultat attendu: Vous devez voir votre profil admin avec role: "admin"
+
+### ============================================
+### CRÉER UN PROFESSEUR
+### ============================================
+
+# @name createProf
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "prof.martin@school.com",
+  "password": "prof123",
+  "role": "professor",
+  "firstName": "Jean",
+  "lastName": "Martin"
+}
+
+### ============================================
+### CRÉER UN ÉTUDIANT
+### ============================================
+
+# @name createStudent
+POST {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "sophie.dubois@school.com",
+  "password": "student123",
+  "role": "student",
+  "firstName": "Sophie",
+  "lastName": "Dubois"
+}
+
+### ============================================
+### LISTER TOUS LES UTILISATEURS
+### ============================================
+
+GET {{apiUrl}}/v1/users
+Authorization: Bearer {{adminToken}}
+
