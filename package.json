@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "npm --prefix functions run build",
-    "serve": "firebase emulators:start",
+    "preserve": "call clean-emu-ports.bat",
+    "serve": "npm run preserve && firebase emulators:start",
     "deploy:functions": "npm --prefix functions run build && firebase deploy --only functions",
     "deploy:rules": "firebase deploy --only firestore:rules",
     "deploy:all": "npm --prefix functions run build && firebase deploy --only functions,firestore:rules"

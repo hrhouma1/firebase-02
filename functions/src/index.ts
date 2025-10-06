@@ -52,8 +52,9 @@ app.use(cors());
 app.use(express.json());
 
 // ==================== ROOT ROUTE ====================
+// Preserve the Cloud Functions base path by using a relative redirect
 app.get("/", (_req, res) => {
-  res.redirect("/docs/");
+  res.redirect("docs/");
 });
 
 // ==================== SWAGGER DOCUMENTATION ====================
