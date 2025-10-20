@@ -1,0 +1,750 @@
+
+Schéma de la base de données générée à partir du code
+
+
+
+SUITE GUIDE 2 (Les 3 rôles)
+Les 3 rôles 
+Rôle USER
+Rôle MANAGER
+Rôle ADMIN
+
+1 – Commencer par créer 4 utilisateurs 
+
+Utilisateur 1
+
+POST /api/Auth/register
+{
+"username": "hrehouma",
+"email": "hrehouma@xtrawork.com",
+"password": "hrehouma",
+"firstName": "Haythem",
+"lastName": "Rehouma"
+}
+
+Utilisateur 2
+POST /api/Auth/register
+{
+"username": "admin1",
+"email": "admin1@xtrawork.com",
+"password": "Admin!123",
+"firstName": "Admin",
+"lastName": "One"
+}
+
+Utilisateur 3
+POST /api/Auth/register
+{
+"username": "manager1",
+"email": "manager1@xtrawork.com",
+"password": "Manager!123",
+"firstName": "Manager",
+"lastName": "One"
+}
+
+Utilisateur 4
+POST /api/Auth/register
+{
+"username": "employee1",
+"email": "employee1@xtrawork.com",
+"password": "Employee!123",
+"firstName": "Employee",
+"lastName": "One"
+}
+
+
+2 – Changer les rôles
+USE XtraWork;
+UPDATE Users 
+SET Role = 'Admin' 
+WHERE Username = admin1;
+
+
+USE XtraWork;
+UPDATE Users 
+SET Role = Manager 
+WHERE Username = manager1;
+
+USE XtraWork;
+UPDATE Users 
+SET Role = 'User' 
+WHERE Username = employee1;
+
+3- Testez les endpoints du rôle Administrateur  
+
+4- Testez les endpoints du rôle Manager  
+
+5- Testez les endpoints du rôle User 
+
+Comment changer d’utilisateur et de rôle?
+
+Utilisateur 1 – hrehouma (USER)
+Login
+POST /api/Auth/login
+{
+  "username": "hrehouma",
+  "password": "hrehouma"
+}
+
+
+Profil courant
+GET /api/Auth/me
+Authorization: Bearer {TOKEN_OBTENU}
+
+
+Ou simplement allez en haut à droite dans Swagger et coller le TOKEN_OBTENU (MÉTHODE PRÉFÉRÉE)
+
+
+Utilisateur 2 – admin1 (ADMIN)
+Login
+POST /api/Auth/login
+{
+  "username": "admin1",
+  "password": "Admin!123"
+}
+
+
+Profil courant
+GET /api/Auth/me
+Authorization: Bearer {TOKEN_ADMIN1}
+
+
+Ou simplement allez en haut à droite dans Swagger et coller le TOKEN_OBTENU (MÉTHODE PRÉFÉRÉE)
+
+
+Utilisateur 3 – manager1 (MANAGER)
+Login
+POST /api/Auth/login
+{
+  "username": "manager1",
+  "password": "Manager!123"
+}
+
+
+Profil courant
+GET /api/Auth/me
+Authorization: Bearer {TOKEN_MANAGER1}
+Ou simplement allez en haut à droite dans Swagger et coller le TOKEN_OBTENU (MÉTHODE PRÉFÉRÉE)
+
+
+Utilisateur 4 – employee1 (USER)
+Login
+POST /api/Auth/login
+{
+  "username": "employee1",
+  "password": "Employee!123"
+}
+
+
+Profil courant
+GET /api/Auth/me
+Authorization: Bearer {TOKEN_EMPLOYEE1}
+
+
+Ou simplement allez en haut à droite dans Swagger et coller le TOKEN_OBTENU (MÉTHODE PRÉFÉRÉE)
+
+
+
+
+3- Testez les endpoints du rôle Administrateur  
+
+Utilisateur 2 – admin1 (ADMIN)
+2.1 - Login
+POST /api/Auth/login
+{
+  "username": "admin1",
+  "password": "Admin!123"
+}
+
+
+2.2 – Ajout du token à Swagger
+Ou simplement allez en haut à droite dans Swagger et coller le TOKEN_OBTENU (MÉTHODE PRÉFÉRÉE)
+
+
+
+
+2.3 - Profil courant
+GET /api/Auth/me
+
+
+
+
+
+
+
+
+
+Je vous présente la checklist complète des tests pour le rôle ADMIN, sous forme de points clairs.
+
+✅ Tests ADMIN – Résumé par Points
+Authentification
+Inscription (POST /api/Auth/register)
+Passage du rôle à Admin (via SQL/assign)
+Connexion (POST /api/Auth/login)
+Vérifier profil (GET /api/Auth/me)
+Tests sur Titles
+Lire tous les Titles (GET /api/Title)
+Créer un Title (POST /api/Title)
+Créer plusieurs Titles (POST /api/Title)
+Modifier un Title (PUT /api/Title/{id})
+Récupérer un Title spécifique (GET /api/Title/{id})
+Supprimer un Title (DELETE /api/Title/{id})
+Tests sur Employees
+Créer plusieurs Employees (POST /api/Employee)
+Lire tous les Employees (GET /api/Employee)
+Lire un Employee spécifique (GET /api/Employee/{id})
+Modifier un Employee (PUT /api/Employee/{id})
+Supprimer un Employee (DELETE /api/Employee/{id})
+Vérifier Employee supprimé (GET /api/Employee/{id} → 404)
+Tests de Validation
+Créer Title trop court (POST /api/Title) → 400
+Créer Title trop long (POST /api/Title) → 400
+Créer Employee trop jeune (<16 ans) → 400
+Créer Employee trop vieux (>70 ans) → 400
+Créer Employee avec genre invalide → 400
+Créer Employee avec TitleId invalide → 400
+
+
+✅ Tests ADMIN – Format JSON
+{
+  "role": "ADMIN",
+  "tests": {
+    "auth": [
+      "POST /api/Auth/register (inscription)",
+      "Assigner rôle Admin (SQL ou assign)",
+      "POST /api/Auth/login (connexion)",
+      "GET /api/Auth/me (profil)"
+    ],
+    "titles": [
+      "GET /api/Title (lire tous)",
+      "POST /api/Title (créer 1)",
+      "POST /api/Title (créer plusieurs)",
+      "PUT /api/Title/{id} (modifier)",
+      "GET /api/Title/{id} (récupérer spécifique)",
+      "DELETE /api/Title/{id} (supprimer)"
+    ],
+    "employees": [
+      "POST /api/Employee (créer plusieurs)",
+      "GET /api/Employee (lire tous)",
+      "GET /api/Employee/{id} (récupérer spécifique)",
+      "PUT /api/Employee/{id} (modifier)",
+      "DELETE /api/Employee/{id} (supprimer)",
+      "GET /api/Employee/{id} (vérifier supprimé → 404)"
+    ],
+    "validations": [
+      "POST /api/Title (description trop courte → 400)",
+      "POST /api/Title (description trop longue → 400)",
+      "POST /api/Employee (âge <16 → 400)",
+      "POST /api/Employee (âge >70 → 400)",
+      "POST /api/Employee (genre invalide → 400)",
+      "POST /api/Employee (titleId inexistant → 400)"
+    ]
+  }
+}
+
+Voir l’annexe pour des tests avec des corps de requête !
+
+Annexe 1 
+
+
+POST /api/Auth/register (inscription)
+{
+  "username": "admin",
+  "email": "admin@xtrawork.com",
+  "password": "Admin123!",
+  "firstName": "Sophie",
+  "lastName": "Administrateur"
+}
+
+POST /api/Auth/login (connexion)
+{
+  "username": "admin",
+  "password": "Admin123!"
+}
+
+GET /api/Auth/me (profil)
+(pas de corps requis)
+
+POST /api/Title (créer 1)
+{
+  "description": "Analyste Business"
+}
+
+POST /api/Title (créer plusieurs)
+{
+  "description": "DevOps Engineer"
+}
+
+PUT /api/Title/{id} (modifier)
+{
+  "description": "Analyste Business Senior"
+}
+
+GET /api/Title/{id} (récupérer spécifique)
+(pas de corps requis)
+
+DELETE /api/Title/{id} (supprimer)
+(pas de corps requis)
+
+
+POST /api/Employee (créer plusieurs)
+{
+  "firstName": "Thomas",
+  "lastName": "Bernard",
+  "birthDate": "1995-11-08",
+  "gender": "M",
+  "titleId": "REMPLACER-AVEC-ID-TITLE-VALIDE"
+}
+
+PUT /api/Employee/{id} (modifier)
+{
+  "firstName": "Thomas",
+  "lastName": "Bernard-Dupont",
+  "birthDate": "1995-11-08",
+  "gender": "M",
+  "titleId": "MÊME-ID-QUE-AVANT"
+}
+
+GET /api/Employee/{id} (récupérer spécifique)
+(pas de corps requis)
+
+DELETE /api/Employee/{id} (supprimer)
+(pas de corps requis)
+
+GET /api/Employee/{id} (vérifier supprimé → 404)
+(pas de corps requis)
+
+
+Tests de Validation
+POST /api/Title (description trop courte → 400)
+{
+  "description": "D"
+}
+
+POST /api/Title (description trop longue → 400)
+{
+  "description": "Ce titre est beaucoup trop long et dépasse largement la limite de 100 caractères autorisés par la validation configurée"
+}
+
+POST /api/Employee (âge <16 → 400)
+{
+  "firstName": "Jeune",
+  "lastName": "Employé",
+  "birthDate": "2015-01-01",
+  "gender": "M",
+  "titleId": "REMPLACER-AVEC-ID-TITLE-VALIDE"
+}
+
+POST /api/Employee (âge >70 → 400)
+{
+  "firstName": "Ancien",
+  "lastName": "Employé",
+  "birthDate": "1940-01-01",
+  "gender": "M",
+  "titleId": "REMPLACER-AVEC-ID-TITLE-VALIDE"
+}
+
+POST /api/Employee (genre invalide → 400)
+{
+  "firstName": "Test",
+  "lastName": "Genre",
+  "birthDate": "1990-01-01",
+  "gender": "X",
+  "titleId": "REMPLACER-AVEC-ID-TITLE-VALIDE"
+}
+
+POST /api/Employee (titleId inexistant → 400)
+{
+  "firstName": "Test",
+  "lastName": "Titre",
+  "birthDate": "1990-01-01",
+  "gender": "M",
+  "titleId": "00000000-0000-0000-0000-000000000000"
+}
+
+
+
+
+4- Testez les endpoints du rôle Manager  
+
+
+Utilisateur 3 – manager1 (MANAGER)
+
+4.1 – Login
+POST /api/Auth/login
+{
+  "username": "manager1",
+  "password": "Manager!123"
+}
+
+4.2 – Ajout du token à Swagger
+Ou simplement allez en haut à droite dans Swagger et coller le TOKEN_OBTENU (MÉTHODE PRÉFÉRÉE)
+4.3 – Profil courant
+GET /api/Auth/me
+(pas de corps requis)
+
+
+✅ Checklist MANAGER – Résumé par points
+
+Authentification
+Connexion (POST /api/Auth/login)
+Vérifier profil (GET /api/Auth/me)
+Titles (MANAGER peut lire/créer/modifier, mais pas supprimer)
+Lire tous les Titles (GET /api/Title)
+Créer un Title (POST /api/Title)
+Créer plusieurs Titles (POST /api/Title)
+Modifier un Title (PUT /api/Title/{id})
+Récupérer un Title spécifique (GET /api/Title/{id})
+❌ Supprimer un Title (DELETE /api/Title/{id}) → 403 attendu
+Employees (MANAGER a CRUD complet)
+Créer un Employee (POST /api/Employee)
+Créer plusieurs Employees (POST /api/Employee)
+Lire tous les Employees (GET /api/Employee)
+Lire un Employee spécifique (GET /api/Employee/{id})
+Modifier un Employee (PUT /api/Employee/{id})
+Supprimer un Employee (DELETE /api/Employee/{id})
+Vérifier Employee supprimé (GET /api/Employee/{id} → 404)
+Tests négatifs / validations utiles (facultatif mais recommandé)
+DELETE /api/Title/{id} → 403 (Forbidden) pour MANAGER
+IDs inexistants sur GET/PUT/DELETE → 404
+JSON invalide (ex. description vide, dates invalides, genre invalide) → 400
+
+🧭 Matrice MANAGER (rappel)
+Ressource
+GET (list/one)
+POST
+PUT
+DELETE
+Titles
+✅ / ✅
+✅
+✅
+❌ (403)
+Employees
+✅ / ✅
+✅
+✅
+✅
+
+
+
+
+Voir l’annexe pour des tests avec des corps de requête !
+
+Annexe 2 
+
+Annexes – Endpoints puis corps JSON à coller dans Swagger
+
+TITLES
+POST /api/Title (créer 1)
+{
+  "description": "Développeur Full Stack"
+}
+
+POST /api/Title (créer 2)
+{
+  "description": "Chef de Projet"
+}
+
+PUT /api/Title/{id} (modifier)
+{
+  "description": "Développeur Full Stack Senior"
+}
+
+GET /api/Title
+(pas de corps requis)
+
+GET /api/Title/{id}
+(pas de corps requis)
+
+DELETE /api/Title/{id}
+(pas de corps requis — doit renvoyer 403 pour MANAGER)
+
+
+EMPLOYEES
+
+Remplace titleId par un ID réel de Title (créé ci-dessus).
+
+POST /api/Employee (créer 1)
+{
+  "firstName": "Claire",
+  "lastName": "Dubois",
+  "birthDate": "1988-07-22",
+  "gender": "F",
+  "titleId": "REMPLACER-AVEC-ID-TITLE-VALIDE"
+}
+
+POST /api/Employee (créer 2)
+{
+  "firstName": "Hugo",
+  "lastName": "Martin",
+  "birthDate": "1991-02-10",
+  "gender": "M",
+  "titleId": "REMPLACER-AVEC-ID-TITLE-VALIDE"
+}
+
+PUT /api/Employee/{id} (modifier)
+{
+  "firstName": "Claire",
+  "lastName": "Dubois-Dupont",
+  "birthDate": "1988-07-22",
+  "gender": "F",
+  "titleId": "MÊME-ID-QUE-AVANT"
+}
+
+GET /api/Employee
+(pas de corps requis)
+
+GET /api/Employee/{id}
+(pas de corps requis)
+
+DELETE /api/Employee/{id}
+(pas de corps requis)
+
+GET /api/Employee/{id} (vérifier supprimé → 404)
+(pas de corps requis)
+
+
+
+
+📌 Cas négatifs conseillés (rapides)
+
+DELETE /api/Title/{id} (MANAGER → 403)
+{}
+
+PUT /api/Title/{id-inexistant} (→ 404)
+{
+  "description": "Titre inexistant test"
+}
+
+POST /api/Title (description trop courte → 400)
+{
+  "description": "D"
+}
+
+POST /api/Employee (genre invalide → 400)
+{
+  "firstName": "Test",
+  "lastName": "Genre",
+  "birthDate": "1990-01-01",
+  "gender": "X",
+  "titleId": "REMPLACER-AVEC-ID-TITLE-VALIDE"
+}
+
+Astuces pratiques
+
+Utilise d’abord GET /api/Title pour récupérer un titleId valide.
+Garde à portée les IDs créés (Titles & Employees) pour enchaîner PUT/DELETE/GET.
+Si un appel échoue :
+vérifier le token (cadenas Swagger),
+vérifier le rôle (GET /api/Auth/me),
+vérifier l’ID,
+valider le JSON.
+
+
+Exercice : 
+Je rajouterais juste ces petits compléments utiles pour être vraiment exhaustif côté MANAGER :
+Vérifs d’autorisation (401/403)
+GET /api/Auth/me (sans token) → 401 Unauthorized
+DELETE /api/Title/{id} (avec token Manager) → 403 Forbidden (rappel)
+Vérifs d’IDs inexistants (404)
+GET /api/Title/{id-inexistant} → 404
+PUT /api/Title/{id-inexistant} → 404
+GET /api/Employee/{id-inexistant} → 404
+DELETE /api/Employee/{id-inexistant} → 404
+Vérifs de validation (400)
+POST /api/Title (description trop courte)
+{ "description": "D" }
+POST /api/Employee (genre invalide)
+{
+  "firstName": "Test",
+  "lastName": "Genre",
+  "birthDate": "1990-01-01",
+  "gender": "X",
+  "titleId": "REMPLACER-AVEC-ID-TITLE-VALIDE"
+}
+POST /api/Employee (titleId inexistant)
+{
+  "firstName": "Test",
+  "lastName": "Titre",
+  "birthDate": "1990-01-01",
+  "gender": "M",
+  "titleId": "00000000-0000-0000-0000-000000000000"
+}
+Astuce Swagger (rappel)
+Ou simplement allez en haut à droite dans Swagger et coller le TOKEN_OBTENU (MÉTHODE PRÉFÉRÉE).
+Si tu ajoutes ces cas (401/403/404/400), ton plan MANAGER est complet. 
+
+
+
+5- Testez les endpoints du rôle User 
+
+
+
+
+Utilisateur 4 – employee1 (USER)
+5.1 – Login
+POST /api/Auth/login
+{
+  "username": "employee1",
+  "password": "Employee!123"
+}
+5.2 – Ajout du token à Swagger
+Ou simplement allez en haut à droite dans Swagger et coller le TOKEN_OBTENU (MÉTHODE PRÉFÉRÉE)
+5.3 – Profil courant
+GET /api/Auth/me
+(pas de corps requis)
+
+✅ Checklist USER – Résumé par points
+
+Authentification
+Connexion (POST /api/Auth/login)
+Voir profil (GET /api/Auth/me)
+
+Titles (USER = lecture seule)
+Lire tous les Titles (GET /api/Title)
+Lire un Title spécifique (GET /api/Title/{id})
+❌ Créer un Title (POST /api/Title) → 403 attendu
+❌ Modifier un Title (PUT /api/Title/{id}) → 403 attendu
+❌ Supprimer un Title (DELETE /api/Title/{id}) → 403 attendu
+
+Employees (USER = lire / créer / modifier, pas supprimer)
+Lire tous les Employees (GET /api/Employee)
+Lire un Employee spécifique (GET /api/Employee/{id})
+Créer un Employee (POST /api/Employee)
+Modifier un Employee (PUT /api/Employee/{id})
+❌ Supprimer un Employee (DELETE /api/Employee/{id}) → 403 attendu
+
+Tests négatifs / validations utiles
+GET /api/Auth/me sans token → 401 Unauthorized
+IDs inexistants sur GET/PUT /api/Employee/{id} → 404
+JSON invalide (dates/genre/description/titleId) → 400
+
+
+
+
+🧭 Matrice USER (rappel)
+Ressource
+GET (list/one)
+POST
+PUT
+DELETE
+Titles
+✅ / ✅
+❌ (403)
+❌ (403)
+❌ (403)
+Employees
+✅ / ✅
+✅
+✅
+❌ (403)
+
+
+Annexes – Endpoints puis corps JSON à coller dans Swagger
+
+AUTH
+POST /api/Auth/login (connexion)
+{
+  "username": "employee1",
+  "password": "Employee!123"
+}
+
+GET /api/Auth/me (profil)
+(pas de corps requis)
+
+TITLES (lecture seule)
+GET /api/Title
+(pas de corps requis)
+
+GET /api/Title/{id}
+(pas de corps requis)
+
+POST /api/Title (doit échouer → 403)
+{
+  "description": "Tentative non autorisée par USER"
+}
+
+PUT /api/Title/{id} (doit échouer → 403)
+{
+  "description": "Modification non autorisée"
+}
+
+DELETE /api/Title/{id} (doit échouer → 403)
+(pas de corps requis)
+
+EMPLOYEES
+Remplace titleId par un ID réel de Title (créé par Admin/Manager).
+POST /api/Employee (créer)
+{
+  "firstName": "Pierre",
+  "lastName": "Durand",
+  "birthDate": "1990-03-15",
+  "gender": "M",
+  "titleId": "REMPLACER-AVEC-ID-TITLE-VALIDE"
+}
+
+PUT /api/Employee/{id} (modifier)
+{
+  "firstName": "Pierre",
+  "lastName": "Durand-Martin",
+  "birthDate": "1990-03-15",
+  "gender": "M",
+  "titleId": "MÊME-ID-QUE-AVANT"
+}
+
+GET /api/Employee
+(pas de corps requis)
+
+GET /api/Employee/{id}
+(pas de corps requis)
+
+DELETE /api/Employee/{id} (doit échouer → 403)
+(pas de corps requis)
+
+
+📌 Cas négatifs conseillés (rapides)
+
+
+GET /api/Auth/me (sans token → 401)
+{}
+
+GET /api/Employee/{id-inexistant} (→ 404)
+(pas de corps requis)
+
+PUT /api/Employee/{id-inexistant} (→ 404)
+{
+  "firstName": "Ghost",
+  "lastName": "User",
+  "birthDate": "1990-01-01",
+  "gender": "M",
+  "titleId": "REMPLACER-AVEC-ID-TITLE-VALIDE"
+}
+
+POST /api/Employee (genre invalide → 400)
+{
+  "firstName": "Test",
+  "lastName": "Genre",
+  "birthDate": "1990-01-01",
+  "gender": "X",
+  "titleId": "REMPLACER-AVEC-ID-TITLE-VALIDE"
+}
+
+
+POST /api/Employee (titleId inexistant → 400)
+{
+  "firstName": "Test",
+  "lastName": "Titre",
+  "birthDate": "1990-01-01",
+  "gender": "M",
+  "titleId": "00000000-0000-0000-0000-000000000000"
+}
+
+Astuces pratiques
+Commence par GET /api/Title pour récupérer un titleId valide.
+Garde les IDs créés sous la main pour tester PUT/GET.
+Si un appel échoue : vérifie token (cadenas) → rôle → ID → JSON.
+
+
+
+
