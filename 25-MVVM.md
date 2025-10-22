@@ -223,3 +223,101 @@ Résumé mapping :
 
 
 
+# Annexe 1
+
+
+# 1) Vue d’ensemble — les 4 boîtes qui se parlent
+
+```mermaid
+flowchart LR
+  UI[View / UI<br/>(écrans & widgets)] -->|demande données| VM[ViewModel<br/>(Provider)]
+  VM -->|appels| REPO[Repository<br/>(Dio/HTTP, cache)]
+  REPO -->|requêtes| API[Backend / API<br/>(serveur, DB)]
+
+  API -->|réponse JSON| REPO
+  REPO -->|retour modèles| VM
+  VM -->|notifyListeners()| UI
+```
+
+# 2) Flux concret “Liste des cours” (séquence)
+
+```mermaid
+sequenceDiagram
+  actor U as Utilisateur
+  participant V as View (CourseListScreen)
+  participant VM as ViewModel (CourseProvider)
+  participant R as Repository (CourseRepository)
+  participant A as API (GET /v1/courses)
+
+  U->>V: Ouvre l'écran
+  V->>VM: load()
+  VM->>V: isLoading = true (spinner)
+  VM->>R: getCourses()
+  R->>A: HTTP GET /v1/courses
+  A-->>R: 200 OK (JSON cours[])
+  R-->>VM: List<Course>
+  VM->>V: notifyListeners() (isLoading=false, courses[])
+  V-->>U: Affiche la liste des cours
+```
+
+# 3) Organisation des fichiers (par dossiers)
+
+```mermaid
+flowchart TB
+  subgraph LIB[lib/]
+    subgraph SCREENS[screens/ (UI)]
+      S1[login_screen.dart]
+      S2[course_list_screen.dart]
+    end
+    subgraph PROVIDERS[providers/ (ViewModel)]
+      P1[auth_provider.dart]
+      P2[course_provider.dart]
+    end
+    subgraph DATA[data/]
+      subgraph MODELS[models/]
+        M1[user.dart]
+        M2[course.dart]
+      end
+      subgraph REPOS[repositories/]
+        R1[auth_repository.dart]
+        R2[course_repository.dart]
+      end
+      subgraph SERVICES[services/]
+        SV1[api_service.dart (Dio)]
+        SV2[storage_service.dart]
+      end
+    end
+    subgraph CORE[core/ (communs)]
+      C1[constants/]
+      C2[utils/validators.dart]
+      C3[widgets/loading.dart]
+    end
+  end
+
+  S2 --> P2
+  P2 --> R2
+  R2 --> SV1
+```
+
+# 4) MVVM “version resto” (analogie)
+
+```mermaid
+sequenceDiagram
+  actor C as Client
+  participant SALLE as View (Salle/Carte)
+  participant SERV as ViewModel (Serveur)
+  participant PASS as Repository (Passe-plat/POS)
+  participant CUIS as API (Cuisine)
+
+  C->>SALLE: Choisit un plat
+  SALLE->>SERV: Passer commande
+  SERV->>PASS: Créer bon (Model) & envoyer
+  PASS->>CUIS: Préparer plat (requête)
+  CUIS-->>PASS: Plat prêt / Erreur
+  PASS-->>SERV: Résultat
+  SERV->>SALLE: notifyListeners() (mise à jour)
+  SALLE-->>C: Affiche plat / message
+```
+
+
+
